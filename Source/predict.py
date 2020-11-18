@@ -47,7 +47,6 @@ def ImageMain(args):
 			  face = face.to(torch.device("cuda:0"))
 			  emb_buff = model(face).cpu()
 			buff = emb_buff.numpy().reshape(1, -1)
-
 			predictions = svm_model.predict_proba(buff).ravel()
 			best_class_idxs = np.argmax(predictions)
 			confidence = predictions[best_class_idxs]*100
@@ -90,7 +89,6 @@ def VideoMain(args):
 				  face = face.to(torch.device("cuda:0"))
 				  emb_buff = model(face).cpu()
 				buff = emb_buff.numpy().reshape(1, -1)
-
 				predictions = svm_model.predict_proba(buff).ravel()
 				best_class_idxs = np.argmax(predictions)
 				confidence = predictions[best_class_idxs]*100

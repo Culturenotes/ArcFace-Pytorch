@@ -9,7 +9,7 @@ import argparse
 from threading import Thread
 sys.path.insert(1, "MTCNN")
 from mtcnn import MTCNN, detect_face
-
+MAX_IMGS = 100
 NROF_IMGS = 0
 FONT = cv2.FONT_HERSHEY_SIMPLEX 
 device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
@@ -20,7 +20,7 @@ def save_face(img, save_dir):
 	boxes, proba, points = detector.detect(img, select_largest=True, landmarks=True, proba=True)
 	if boxes is not None:
 		for box, point in zip(boxes, points):
-			if NROF_IMGS < 15 and proba > 0.995:
+			if NROF_IMGS < MAX_IMGS and proba > 0.99:
 				NROF_IMGS+=1
 				face = detect_face.extract_face(img, box, image_size=160)
 				os.makedirs(os.path.dirname(save_dir + "%d.jpg"%(NROF_IMGS)) + "/", exist_ok=True)
@@ -30,9 +30,9 @@ def save_face(img, save_dir):
 	
 def main(args):
 	nrof_lines = 256
-	SAVE_DIR = "../Dataset/Raw/" + args.name + '/'
+	SAVE_DIR = "../Dataset/Processed/" + args.name + '/'
 
-	cap = cv2.VideoCapture("../../1.mp4")
+	cap = cv2.VideoCapture(0)
 	if not cap.isOpened:
 		raise RuntimeError("Cannot Open Video")
 	
@@ -52,7 +52,7 @@ def main(args):
 			pt2 = x + math.sin(angle)*10, y + math.cos(angle)*10
 			cv2.line(img, tuple(np.int32(pt1)), tuple(np.int32(pt2)), (255, 255, 255), 1)
 
-		percent = NROF_IMGS/15
+		percent = NROF_IMGS/MAX_IMGS
 		nrof_big_lines = nrof_lines * percent
 		n = 0
 		while n < nrof_big_lines :
@@ -63,20 +63,21 @@ def main(args):
 			cv2.line(img, tuple(np.int32(pt1)), tuple(np.int32(pt2)), (255, 255, 255), 2)
 			n += 1
 		
-		if (time.time() - start) > 0.5:
-			thread = Thread(target=save_face, args=(img, SAVE_DIR,))
-			thread.start()
-			start = time.time()
+		thread = Thread(target=save_face, args=(img, SAVE_DIR,))
+		thread.start()
+		start = time.time()
 		
 		boxes = detector.detect(img, select_largest=True, landmarks=False, proba=False)
 		if boxes is not None:
 			for box in boxes:
+				cv2.putText(img, "Turn Head Around!", (10, 50), FONT, 1, (255, 255, 255), 2, cv2.LINE_AA)
 				cv2.rectangle(img, tuple((np.int32(box[0]), np.int32(box[1]))), tuple((np.int32(box[2]), np.int32(box[3]))), (255, 255, 255), 1)
-		if NROF_IMGS == 15:
+		if NROF_IMGS == MAX_IMGS:
 			done_logo = cv2.imread("../Dataset/done.jpg")
 			done_logo = cv2.resize(done_logo, (200, 200))
 			done_logo = cv2.addWeighted(img[h//2-100:h//2+100,w//2-100:w//2+100,:],0.1,done_logo[0:200,0:200,:],0.9,0)
 			img[h//2-100:h//2+100,w//2-100:w//2+100,:] = done_logo
+			cv2.putText(img, "Press ""Q"" to Exit.", (h//2-100, w//2-100), FONT, 1, (255, 255, 255), 2, cv2.LINE_AA)
 		cv2.imshow('preview', np.uint8(img))
 		if cv2.waitKey(1) & 0xFF == ord('q'):
 			break
@@ -90,7 +91,7 @@ if __name__ == '__main__':
 	parser = argparse.ArgumentParser()
 
 	parser.add_argument('name', type=str,
-		help='Name of adding identify')
+		help='Name of identify')
 
 	args = parser.parse_args()
 	main(args)

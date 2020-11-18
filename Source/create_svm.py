@@ -14,25 +14,25 @@ import numpy as np
 
 
 model = MobileFaceNet(512).to(torch.device("cuda:0"))
-#model.load_state_dict(torch.load('../PretrainedModel/model.pth'))
+model.load_state_dict(torch.load('../PretrainedModel/model.pth'))
 
-dataset = load_dataset('../Dataset/Raw/')
+dataset = load_dataset('../Dataset/Processed/')
 images = []
 labels = []
 
 transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])])
 
-for i in range(len(dataset)):
-  for j in range(len(dataset[i].paths)):
-    img = cv2.imread(dataset[i].paths[j])
+for class_name in dataset:
+  for path in class_name.paths:
+    img = cv2.imread(path)
     img = cv2.resize(img,(112,112))
     img = transform(img)
     img = img.type(torch.FloatTensor)
     images.append(img)
-    labels.append(dataset[i].name)
+    labels.append(class_name.name)
+
 img_batch = torch.utils.data.DataLoader(images, batch_size=32)
 labels = np.array(labels)
-print(labels)
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True, num_workers=2)
 
 #---------------------CREATE EMBEDDING AND LABEL-----------------------------------------

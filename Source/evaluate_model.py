@@ -1,10 +1,12 @@
 import torch
 import pandas as pd
 import os
+import cv2
 import numpy as np
 import bcolz
 from datetime import datetime
 from Facenet.evaluate import eval
+import matplotlib.pyplot as plt
 from Model.MobileFacenet import MobileFaceNet
 
 
@@ -32,7 +34,6 @@ def evaluate(model, carray, issame, nrof_folds = 5):
 
 
 lfw, lfw_issame = get_val_pair('../Dataset/faces_emore/', 'lfw')
-print(lfw.shape, lfw_issame.shape)
 
 model = MobileFaceNet(512).to(torch.device("cuda:0"))
 model.load_state_dict(torch.load('../PretrainedModel/model.pth'))
